@@ -1,0 +1,1 @@
+This is a prototypical start template for Drupal sites.  I am semi-diligently going to update the core code, as well as the modules & themes, all of which are drawn from the most popular lists on drupal.org.
