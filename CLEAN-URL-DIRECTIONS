@@ -1,0 +1,35 @@
+Clean URL's procedure:
+
+This is the stripped down version of wwhat I typically have to do for Apache.
+
+apachectl -M | grep rewrite
+if this command shows nothing, try this:
+
+a2enmod rewrite
+This will usually work, and enable the rewrite module in Apache, if not:
+
+find /etc -name httpd*
+or
+find /etc -name apache2*
+to find your Apache conf file.  And look for/enter this:
+
+LoadModule rewrite_module modules/mod_rewrite.so
+AddModule mod_rewrite.c
+
+The easiest way to enable the drupal .htaccess file is this:
+
+<Directory /var/www/drupal>
+AllowOverride All
+</Directory>
+
+and this, either in the above Directory block or on it's own:
+
+AccessFileName .htaccess
+
+Finally, in .htaccess, make sure the following RewriteBase is enabled:
+
+RewriteBase /your-base-directory
+
+This will make http://localhost/your-base-directory find index.php in /your-base-directory.
+
+These are the easiest rules for enabling Clean URL's in Drupal I have found.
