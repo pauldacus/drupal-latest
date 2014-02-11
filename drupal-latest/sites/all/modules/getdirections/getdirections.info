@@ -7,9 +7,9 @@ configure = admin/config/services/getdirections
 package = Location
 ;dependencies[] = entity
 
-; Information added by drupal.org packaging script on 2013-08-26
-version = "7.x-3.0"
+; Information added by Drupal.org packaging script on 2014-01-29
+version = "7.x-3.1"
 core = "7.x"
 project = "getdirections"
-datestamp = "1377538008"
+datestamp = "1390995348"
 

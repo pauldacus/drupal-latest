@@ -1,8 +1,15 @@
 (function($) {
 Drupal.behaviors.entityreferenceViewWidget = {
   attach: function(context, settings) {
+    $('.ervw-add-items').bind('click',
+      function() {
+        if (typeof Drupal.settings['views'] != 'undefined') {
+          Drupal.settings['views']['ajaxViews'] = null;
+        }
+      }
+    );
     var checkboxes = '#modal-content input[name="entity_ids[]"]';
-    $('#entityreference_view_widget_select_all').unbind('click').text('Select all').data('unselect', 0).click(function(){
+    $('#entityreference-view-widget-select-all').unbind('click').text('Select all').data('unselect', 0).click(function(){
       if ($(this).data('unselect')) {
         $(checkboxes).removeAttr('checked');
         $(this).data('unselect', 0).text('Select all');
@@ -15,15 +22,13 @@ Drupal.behaviors.entityreferenceViewWidget = {
     });
     $('#entityreference-view-widget-modal-submit .button').click(function(){
       $('#modal-content .error').remove();
-
       var button = $(this);
       var selected_amount = $(checkboxes + ':checked').length;
-      var field_name = $('#entityreference-view-widget-field-name').val();
-      var field_frontend_name = field_name.replace(/\_/g, '-');
-      var widget_settings = JSON.parse($('#entityreference-view-widget-' + field_frontend_name + '-settings').val());
+      var settings_selector = '#' + $('#entityreference-view-widget-settings-selector').val();
+      var widget_settings = JSON.parse($(settings_selector).val());
       var offset = $('#' + widget_settings.table_id + ' tbody tr').length;
       var entity_ids = $(checkboxes).serialize();
-      var query_string = entity_ids + '&field_name=' + field_name + '&langcode=' + widget_settings.langcode + '&target_type=' + widget_settings.target_type + '&cardinality=' + widget_settings.cardinality;
+      var query_string = entity_ids + '&element=' + widget_settings.element + '&langcode=' + widget_settings.langcode + '&target_type=' + widget_settings.target_type + '&cardinality=' + widget_settings.cardinality;
 
       $('#' + widget_settings.table_id + ' input[type=checkbox]:checked').each(function(){
         query_string += '&default_entity_ids[' + $(this).data('delta') + ']=' + $(this).val();
@@ -35,7 +40,7 @@ Drupal.behaviors.entityreferenceViewWidget = {
       }
       else {
         $.ajax({
-          url: '/?q=entityreference_view_widget/ajax',
+          url: Drupal.settings.basePath + '?q=entityreference_view_widget/ajax',
           type: 'POST',
           dataType: 'html',
           data: query_string,

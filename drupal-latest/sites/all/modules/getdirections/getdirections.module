@@ -70,6 +70,7 @@ function getdirections_menu() {
   );
   $items['getdirections'] = array(
     'title' => 'Get directions',
+    'description' => 'Get directions on a map',
     'access arguments' => array('access gmap getdirections'),
     'page callback' => 'getdirections_direction',
     'type' => MENU_SUGGESTED_ITEM,
@@ -614,7 +615,7 @@ function _getdirections_direction_form($defaults, $misc, $mapid, $fromto='', $lo
   $form = array(
     '#action' => '#',
     '#attributes' => array(
-      'class' => 'getdirections_form',
+      'class' => array('getdirections_form'),
     ),
   );
   if ($fromto == 'from') {
@@ -991,6 +992,11 @@ function getdirections_entity_setlocation($entity_type, $direction, $entity_id, 
   return getdirections_direction();
 }
 
+// backwards compat
+function getdirections_setlocation($direction, $nid, $width='', $height='') {
+  return getdirections_entity_setlocation('node', $direction, $nid, $width, $height);
+}
+
 /**
  * Function to setup the map
  *
@@ -1359,10 +1365,7 @@ function getdirections_setup_map($defaults, $misc_defaults) {
     $scheme = 'https';
   }
 
-  $gmapdomain = "maps.google.com/maps/api/js";
-  if (! empty($key)) {
-    $gmapdomain = "maps.googleapis.com/maps/api/js";
-  }
+  $gmapdomain = "maps.googleapis.com/maps/api/js";
   $gmaplink = url($scheme . '://' . $gmapdomain, array('query' => $query));
 
   if (isset($defaults['preview_map'])) {
@@ -3127,13 +3130,13 @@ function theme_getdirections_show($variables) {
       'data' => '<div id="getdirections_map_canvas_' . $mapid . '" style="width: ' . $width . '; height: ' . $height . '" ></div>',
       'valign' => 'top',
       'align' => 'center',
-      'class' => 'getdirections-map',
+      'class' => array('getdirections-map'),
     ),
     array(
       'data' => ($getdirections_defaults['use_advanced'] && $getdirections_defaults['advanced_alternate'] ? '<button id="getdirections-undo-' . $mapid . '">' . t('Undo') . '</button>' : '') . '<div id="getdirections_directions_' . $mapid . '"></div>',
       'valign' => 'top' ,
       'align' => 'left',
-      'class' => 'getdirections-list',
+      'class' => array('getdirections-list'),
     ),
   );
   $output .= '<div class="getdirections">' . theme('table', array('header' => $header, 'rows' => $rows)) . '</div>';
@@ -3168,13 +3171,13 @@ function theme_getdirections_show_locations($variables) {
       'data' => '<div id="getdirections_map_canvas_' . $mapid . '" style="width: ' . $width . '; height: ' . $height . '" ></div>',
       'valign' => 'top',
       'align' => 'center',
-      'class' => 'getdirections-map',
+      'class' => array('getdirections-map'),
     ),
     array(
       'data' => '<div id="getdirections_directions_' . $mapid . '"></div>',
       'valign' => 'top' ,
       'align' => 'left',
-      'class' => 'getdirections-list',
+      'class' => array('getdirections-list'),
     ),
   );
   $output .= '<div class="getdirections">' . theme('table', array('header' => $header, 'rows' => $rows)) . '</div>';
@@ -3219,13 +3222,13 @@ function theme_getdirections_show_locations_via($variables) {
       'data' => '<div id="getdirections_map_canvas_' . $mapid . '" style="width: ' . $width . '; height: ' . $height . '" ></div>',
       'valign' => 'top',
       'align' => 'center',
-      'class' => 'getdirections-map',
+      'class' => array('getdirections-map'),
     ),
     array(
       'data' => '<div id="getdirections_directions_' . $mapid . '"></div>',
       'valign' => 'top' ,
       'align' => 'left',
-      'class' => 'getdirections-list',
+      'class' => array('getdirections-list'),
     ),
   );
   $output .= '<div class="getdirections">' . theme('table', array('header' => $header, 'rows' => $rows)) . '</div>';

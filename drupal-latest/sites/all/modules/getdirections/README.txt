@@ -140,13 +140,13 @@ generate the string for you.
 Themeing
 To change the way the map is displayed you should copy the theme function you want to change
 to your theme's template.php, renaming appropriately and editing it there.
-see getdirections.theme.inc
+
 There is plenty of help on themeing on drupal.org
 
 An example of a theming change, from http://drupal.org/node/1113042
 
 Your theme should have a template.php,
-copy the function theme_getdirections_show() from getdirections.theme.inc to your template.php,
+copy the function theme_getdirections_show() from getdirections.module to your template.php,
 renaming it appropriately, eg from
 theme_getdirections_show
 to
@@ -155,40 +155,59 @@ where 'mythemename' is the name of your theme. Then change the following:
 
   $rows[] = array(
     array(
-      'data' => '<div id="getdirections_map_canvas" style="width: '. $width .'; height: '. $height .'" ></div>',
+      'data' => '<div id="getdirections_map_canvas_' . $mapid . '" style="width: ' . $width . '; height: ' . $height . '" ></div>',
       'valign' => 'top',
       'align' => 'center',
-      'class' => 'getdirections-map',
+      'class' => array('getdirections-map'),
     ),
     array(
-      'data' => ($getdirections_defaults['advanced_alternate'] ? '<button id="getdirections-undo" onclick="getdirectionsundo()">' . t('Undo') . '</button>' : '') .'<div id="getdirections_directions"></div>',
+      'data' => ($getdirections_defaults['use_advanced'] && $getdirections_defaults['advanced_alternate'] ? '<button id="getdirections-undo-' . $mapid . '">' . t('Undo') . '</button>' : '') . '<div id="getdirections_directions_' . $mapid . '"></div>',
       'valign' => 'top' ,
       'align' => 'left',
-      'class' => 'getdirections-list',
+      'class' => array('getdirections-list'),
     ),
   );
 
 to
   $rows[] = array(
     array(
-      'data' => '<div id="getdirections_map_canvas" style="width: '. $width .'; height: '. $height .'" ></div>',
+      'data' => '<div id="getdirections_map_canvas_' . $mapid . '" style="width: ' . $width . '; height: ' . $height . '" ></div>',
       'valign' => 'top',
       'align' => 'center',
-      'class' => 'getdirections-map',
+      'class' => array('getdirections-map'),
     ),
   );
   $rows[] = array(
     array(
-      'data' => ($getdirections_defaults['advanced_alternate'] ? '<button id="getdirections-undo" onclick="getdirectionsundo()">' . t('Undo') . '</button>' : '') .'<div id="getdirections_directions"></div>',
+      'data' => ($getdirections_defaults['use_advanced'] && $getdirections_defaults['advanced_alternate'] ? '<button id="getdirections-undo-' . $mapid . '">' . t('Undo') . '</button>' : '') . '<div id="getdirections_directions_' . $mapid . '"></div>',
       'valign' => 'top' ,
       'align' => 'left',
-      'class' => 'getdirections-list',
+      'class' => array('getdirections-list'),
     ),
   );
 
 What this does is rearrange the table so that it produces two rows with one datacell each instead of one row with two datacells.
 
 Make sure you flush the theme registry when you have made the changes, the devel and admin_menu modules are helpful for this.
+
+Putting Getdirections map and list into divs. This example should work with responsive themes.
+replace everything from
+  $header = array();
+to
+  $output .= '<div class="getdirections">' . theme('table', array('header' => $header, 'rows' => $rows)) . '</div>';
+
+with
+  $output .= '<div class="getdirections">';
+  $output .= '<div class="getdirections-map"  style="width: ' . $width . '; height: ' . $height . '" >';
+  $output .= '<div id="getdirections_map_canvas_' . $mapid . '" style="width: 100%; height: 100%" ></div>';
+  $output .= '</div>';
+  $output .= '<div class="getdirections-list">';
+  if ($getdirections_defaults['use_advanced'] && $getdirections_defaults['advanced_alternate']) {
+    $output .= '<button id="getdirections-undo-' . $mapid . '">' . t('Undo') . '</button>';
+  }
+  $output .= '<div id="getdirections_directions_' . $mapid . '"></div>';
+  $output .= '</div>';
+  $output .= '</div>';
 
 Blocks.
 Here is a simple way to crete a block with a form and map in it. Ensure you have php filter enabled and add
@@ -210,12 +229,19 @@ See http://drupal.org/node/1376392#comment-7135346
 Create a custom block. Use the php filter for the content. Then paste this into your block content:
 
 <?php
-$n = arg(0);
-if ($n == 'node') {
-  $nid = arg(1);
-  $map = getdirections_setlocation('to', $nid);
-  echo $map;
+$n = FALSE;
+$nid = FALSE;
+if (arg(0)) {
+  $n = arg(0);
+}
+if (arg(1)) {
+$nid = arg(1);
+}
+if ($n && $nid && is_numeric($nid) && $nid > 0) {
+  $l = getdirections_load_locations($nid, $n);
+  if ($l) {
+    echo getdirections_entity_setlocation($n ,'to', $nid);
+  }
 }
 ?>
-
 
