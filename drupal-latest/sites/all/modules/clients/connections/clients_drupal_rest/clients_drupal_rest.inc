@@ -91,11 +91,11 @@ class clients_connection_drupal_services_rest_7 extends clients_connection_base 
       watchdog('clients', 'Error with REST request. Error was code @code with error "@error" and message "@message".', array(
         '@code'     => $response->code,
         '@error'    => $response->error,
-        '@message'  => $response->status_message,
+        '@message'  => isset($response->status_message) ? $response->status_message : '(no message)',
       ));
 
       throw new Exception(t("Clients connection error, got message '@message'.", array(
-        '@message' => $response->status_message,
+        '@message' => isset($response->status_message) ? $response->status_message : $response->error,
       )), $response->code);
     }
   }
@@ -133,10 +133,20 @@ class clients_connection_drupal_services_rest_7 extends clients_connection_base 
     );
 
     $response = drupal_http_request($this->endpoint . '/user/login', $options);
-    $data = json_decode($response->data);
 
     // Check if login was successful.
     $this->handleRestError($response);
+
+    $data = json_decode($response->data);
+
+    // It's possible for the response to have a 200, but the data to be
+    // malformed. This happens for example when the remote site is running a
+    // debugger.
+    if (!is_object($data) || json_last_error() != JSON_ERROR_NONE) {
+      throw new Exception(t("Clients connection error logging in. Data received was: '@data'.", array(
+        '@data' => $response->data,
+      )), $response->code);
+    }
 
     // Set our cookie for subsequent requests.
     $this->cookie = $data->session_name . '=' . $data->sessid;
@@ -197,7 +207,26 @@ class clients_connection_drupal_services_rest_7 extends clients_connection_base 
    *  The data from the request response.
    */
   function makeRequest($resource_path, $http_method, $data = array()) {
-    if (!isset($this->cookie)) {
+    // Start by assuming we need to log in.
+    $login_needed = TRUE;
+
+    // If the cookie is already set, we don't need to log in.
+    if (isset($this->cookie)) {
+      $login_needed = FALSE;
+    }
+
+    // If the service is 'user/register' (or services_entity module's copy), we
+    // need to be anonymous.
+    // If you want to use this services as an authenticated user, then use the
+    // 'user/create' service, of which this is an alias.
+    if ($resource_path == 'user/register' || $resource_path == 'entity_user/register') {
+      $login_needed = FALSE;
+
+      // Zap any cookie we might have from a previous request.
+      $this->cookie = NULL;
+    }
+
+    if ($login_needed) {
       $this->userLogin();
     }
 

@@ -96,6 +96,18 @@ function menu_rules_rules_condition_info() {
     'group' => t('Menu'),
     'base' => 'menu_rules_node_has_menu_entry',
   );
+  $conditions['menu_rules_taxonomy_term_has_menu_entry'] = array(
+    'label' => t('Taxonomy term has menu entry'),
+    'parameter' => array(
+      'nid' => array(
+        'type' => 'text',
+        'label' => t('Tid'),
+        'default value' => '[term:tid]',
+      ),
+    ),
+    'group' => t('Menu'),
+    'base' => 'menu_rules_taxonomy_term_has_menu_entry',
+  );
   return $conditions;
 }
 /**
@@ -104,6 +116,27 @@ function menu_rules_rules_condition_info() {
 function menu_rules_node_has_menu_entry($nid) {
   $query = db_select('menu_links')->condition('link_path', 'node/' . $nid);
   $num = $query->countQuery()->execute()->fetchField();
+  if($num) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+/**
+ * Callback for condition menu_rules_taxonomy_term_has_menu_entry.
+ */
+function menu_rules_taxonomy_term_has_menu_entry($tid) {
+  $path = 'taxonomy/term/' . $tid;
+  $alias = url($path, array('absolute' => FALSE));
+  
+  $condition = db_or();
+  $condition->condition('link_path', '%' . $path . '%', 'LIKE');
+  $condition->condition('link_path', '%' . $alias . '%', 'LIKE');
+  
+  $query = db_select('menu_links')->condition($condition);
+  $num = $query->countQuery()->execute()->fetchField();
+  
   if($num) {
     return TRUE;
   }
@@ -157,6 +190,74 @@ function menu_rules_rules_action_info() {
     ),
     'group' => t('Menu'),
     'base' => 'menu_rules_create_arbitrary_item',
+  );
+  $actions['menu_rules_update_arbitrary_item'] = array(
+    'label' => t('Update a menu item'),
+    'parameter' => array(
+      'create_if_empty' => array(
+        'type' => 'boolean',
+        'label' => t("Create a new menu link if it doesn't exist already"),
+        'default value' => TRUE,
+      ),
+      'menu_path' => array(
+        'type' => 'text',
+        'label' => t('Menu path'),
+        'default value' => '',
+      ),
+      'new_menu_parent' => array(
+        'type' => 'text',
+        'label' => t('New menu parent item'),
+        'options list' => 'menu_rules_get_menu_parents',
+        'default value' => 'main-menu:0',
+      ),
+      'new_menu_path' => array(
+        'type' => 'text',
+        'label' => t('New menu path'),
+        'default value' => '',
+      ),
+      'new_menu_link_title' => array(
+        'type' => 'text',
+        'label' => t('New menu link title'),
+        'default value' => '',
+      ),
+      'new_language' => array(
+        'type' => 'text',
+        'label' => t('New language'),
+        'default value' => '',
+        'optional' => TRUE,
+      ),
+      'display_messages' => array(
+        'type' => 'boolean',
+        'label' => t('Display a message upon success or error'),
+        'default value' => FALSE,
+      ),
+    ),
+    'provides' => array(
+      'new_menu_item' => array(
+        'label' => t('New menu item'),
+        'type' => 'menu_rules_menu_item',
+        'save' => FALSE,
+      ),
+    ),
+    'group' => t('Menu'),
+    'base' => 'menu_rules_update_arbitrary_item',
+  );
+  $actions['menu_rules_delete_arbitrary_item'] = array(
+    'label' => t('Delete a menu item'),
+    'parameter' => array(
+      'menu_path' => array(
+        'type' => 'text',
+        'label' => t('Menu path'),
+        'default value' => '',
+      ),
+      'display_messages' => array(
+        'type' => 'boolean',
+        'label' => t('Display a message upon success or error'),
+        'default value' => FALSE,
+      ),
+    ),
+    'group' => t('Menu'),
+    'base' => 'menu_rules_delete_arbitrary_item',
   );
   $actions['menu_rules_create_item'] = array(
     'label' => t('Create a menu item for node'),
@@ -269,10 +370,11 @@ function menu_rules_get_menu_parents() {
  */
 function menu_rules_create_arbitrary_item($menu_parent, $menu_title, $menu_path, $menu_language = NULL, $display_messages = FALSE) {
   global $language;
+
   $item = array(
     'link_title' => $menu_title,
     'link_path' => $menu_path,
-    'language' => empty($menu_language) ? $language : $menu_language,
+    'language' => empty($menu_language) ? $language->language : $menu_language,
     'weight' => 0,
   );
   if (is_numeric($menu_parent)) {
@@ -309,7 +411,6 @@ function menu_rules_create_item($menu_parent, $menu_link_title, $nid, $language,
   elseif (strpos($menu_parent, ':')) {
     list($item['menu_name'], $item['plid']) = explode(':', $menu_parent);
   }
-  list($item['menu_name'], $item['plid']) = explode(':', $menu_parent);
   if(menu_link_save($item)) {
     if($display_messages) {
       drupal_set_message(t('A new menu link has been created.'));
@@ -319,6 +420,78 @@ function menu_rules_create_item($menu_parent, $menu_link_title, $nid, $language,
   else {
     if($display_messages) {
       drupal_set_message(t('Menu link could not be created.'));
+    }
+  }
+}
+/**
+ * Callback for action menu_rules_delete_arbitrary_item.
+ */
+function menu_rules_delete_arbitrary_item($menu_path, $display_messages) {
+  $mlid = db_select('menu_links', 'ml')
+    ->fields('ml', array('mlid'))
+    ->condition('link_path', $menu_path)
+    ->range(0, 1)
+    ->execute()
+    ->fetchField();
+  $old_link = menu_link_load($mlid);
+
+  if ($old_link) {
+    menu_link_delete($mlid);
+    if($display_messages) {
+      drupal_set_message(t('Menu link has been deleted.'));
+    }
+  }
+  else {
+    if($display_messages) {
+      drupal_set_message(t('Menu link doesn\'t exist.'));
+    }
+  }
+}
+/**
+ * Callback for action menu_rules_delete_arbitrary_item.
+ */
+function menu_rules_update_arbitrary_item($create_if_empty, $menu_path, $new_menu_parent, $new_menu_path, $new_menu_link_title, $language, $display_messages) {
+
+  $mlid = db_select('menu_links', 'ml')
+    ->fields('ml', array('mlid'))
+    ->condition('link_path', $menu_path)
+    ->range(0, 1)
+    ->execute()
+    ->fetchField();
+  $old_link = menu_link_load($mlid);
+
+  if ($old_link) {
+    $old_link['options'] = serialize($old_link['options']);
+    $item = array(
+      'link_title' => $new_menu_link_title,
+      'link_path' => $new_menu_path,
+      'language' => $language,
+      'mlid' => $mlid,
+      'menu_name' => $old_link['menu_name'],
+      'plid' => $old_link['plid'],
+      'weight' => $old_link['weight'],
+    );
+    if(menu_link_save($item, $old_link)) {
+      if($display_messages) {
+        drupal_set_message(t('Menu link has been updated.'));
+      }
+      return array('updated_menu_item' => $item);
+    }
+    else {
+      if($display_messages) {
+        drupal_set_message(t('Menu link could not be updated.'));
+      }
+    }
+  }
+
+  else {
+    if($create_if_empty) {
+      return  menu_rules_create_arbitrary_item($menu_parent, $new_menu_link_title, $new_menu_path, $language);
+    }
+    else {
+      if($display_messages) {
+        drupal_set_message(t('Could not update menu item as no menu item has been defined for this path.'));
+      }
     }
   }
 }

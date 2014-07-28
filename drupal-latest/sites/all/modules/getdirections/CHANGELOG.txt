@@ -1,9 +1,67 @@
-commit a766d76
+commit a2325ce
+Author: hutch <hutch@midwales.net>
+Date:   Thu May 22 13:06:39 2014 +0100
+
+    added region_bias
+
+getdirections.module
+
+commit 672ef40
+Author: hutch <hutch@midwales.net>
+Date:   Tue May 20 18:03:51 2014 +0100
+
+    removed visual_refresh, improved https detection
+
+CHANGELOG.txt
+getdirections.module
+js/getdirections_preview.js
+js/getdirections_v3.js
+js/getdirections_v3a.js
+js/getdirections_v3b.js
+
+commit c894a4f
+Author: hutch <hutch@midwales.net>
+Date:   Fri May 9 15:43:51 2014 +0100
+
+    more via fix
+
+CHANGELOG.txt
+getdirections.module
+
+commit d77603a
+Author: hutch <hutch@midwales.net>
+Date:   Fri May 9 10:13:10 2014 +0100
+
+    bug in getdirections_entity_setlocations_via
+
+CHANGELOG.txt
+getdirections.module
+
+commit 06b281d
+Author: hutch <hutch@midwales.net>
+Date:   Mon Apr 28 22:22:15 2014 +0100
+
+    added vbo support
+
+CHANGELOG.txt
+modules/getdirections_fields/getdirections_fields.module
+
+commit 7219401
+Author: hutch <hutch@midwales.net>
+Date:   Sun Mar 23 20:31:31 2014 +0000
+
+    added direction option to map display
+
+CHANGELOG.txt
+modules/getdirections_fields/getdirections_fields.module
+
+commit 17ce008
 Author: hutch <hutch@midwales.net>
 Date:   Mon Jan 27 18:18:34 2014 +0000
 
     fixed jquery bug, see #2182815
 
+CHANGELOG.txt
 js/getdirections_v3.js
 
 commit dfc9af0
